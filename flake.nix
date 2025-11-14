@@ -22,7 +22,6 @@
             home-manager.users.cyril = {
               imports = [
                 ./home.nix
-                ./config/cli/cli.nix
               ];
             };
           }
