@@ -8,11 +8,22 @@
     gcc
     ncurses
     fastfetch
+    zsh
   ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  wsl.enable = true;
-  wsl.defaultUser = "cyril";
+  programs.ssh.startAgent = true;
+  programs.zsh.enable = true;
+  users.users.cyril = {
+    shell = pkgs.zsh;
+  };
+  wsl = {
+    enable = true;
+    defaultUser = "cyril";
+    wslConf = {
+      boot.command = "zsh";
+    };
+  };
  
   system.stateVersion = "25.05"; 
 }
