@@ -33,9 +33,13 @@ jobs:
       - name: Build NixOS Tarball
         id: build
         run: |
-          # Use 'sudo -E' to preserve the environment variables (like PATH)
-          # so that the root user can find the 'nix' executable.
-          RESULT_PATH=$(sudo -E nix run .#nixosConfigurations.nixos.config.system.build.tarballBuilder --print-build-logs)
+          # Find the path to the nix executable
+          NIX_PATH=$(which nix)
+          echo "Nix executable found at: $NIX_PATH"
+
+          # Use 'sudo -E' and provide the full path to the 'nix' executable.
+          # This ensures sudo can find it, even if PATH is reset.
+          RESULT_PATH=$(sudo -E $NIX_PATH run .#nixosConfigurations.nixos.config.system.build.tarballBuilder --print-build-logs)
 
           echo "Build complete. Tarball at: $RESULT_PATH"
 
