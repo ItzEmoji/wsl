@@ -36,11 +36,7 @@ jobs:
       - name: Build NixOS Tarball
         id: build
         run: |
-          # We run without 'sudo' as the install-nix-action configures the
-          # Nix daemon to handle builds correctly.
-          #
-          # IMPORTANT: Replace 'your-hostname' with your actual config name!
-          RESULT_PATH=$(nix run .#nixosConfigurations.nixos.config.system.build.tarballBuilder --print-build-logs)
+          RESULT_PATH=$(sudo nix run .#nixosConfigurations.nixos.config.system.build.tarballBuilder --print-build-logs)
 
           echo "Build complete. Tarball at: $RESULT_PATH"
 
