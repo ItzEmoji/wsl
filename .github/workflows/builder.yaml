@@ -37,32 +37,15 @@ jobs:
           NIX_PATH=$(which nix)
           echo "Nix executable found at: $NIX_PATH"
 
-          # Use 'sudo -E' and provide the full path to the 'nix' executable.
-          # Capture ALL stdout from the script.
-          BUILD_OUTPUT=$(sudo -E $NIX_PATH run .#nixosConfigurations.nixos.config.system.build.tarballBuilder --print-build-logs)
+          # Use 'sudo -E' to run the build script.
+          # Based on your feedback, this script should create 'nixos.wsl'
+          # directly in the current directory.
+          sudo -E $NIX_PATH run .#nixosConfigurations.nixos.config.system.build.tarballBuilder --print-build-logs
           
-          echo "--- Full Build Output ---"
-          echo "$BUILD_OUTPUT"
-          echo "-------------------------"
+          echo "Build complete. 'nixos.wsl' should now exist."
 
-          # Get the last line of the output, which should be the store path
-          RESULT_PATH=$(echo "$BUILD_OUTPUT" | tail -n 1)
-
-          echo "Build complete. Extracted tarball path: $RESULT_PATH"
-
-          # Add a check to ensure the path looks valid
-          if [[ ! "$RESULT_PATH" == /nix/store/* ]]; then
-            echo "Error: Extracted path is not a valid /nix/store path!"
-            echo "The build script may have failed or changed its output."
-            exit 1
-          fi
-
-          # Copy the tarball (which is root-owned) to a predictable filename
-          # We need sudo to read the original file.
-          sudo cp "$RESULT_PATH" ./nixos.wsl
-
-          # Change the owner of the new file to the 'runner' user
-          # so the release action can read and upload it.
+          # Change the owner of the new file (which is root-owned)
+          # to the 'runner' user so the release action can read and upload it.
           sudo chown runner:runner ./nixos.wsl
 
           # Pass the asset path and name to the release step
