@@ -1,8 +1,5 @@
 # This workflow builds a NixOS tarball and creates a GitHub release.
 #
-# IMPORTANT: You MUST replace 'your-hostname' in the build command
-# with the actual hostname from your NixOS configuration flake.
-#
 name: Build and Release NixOS Tarball
 
 on:
@@ -36,12 +33,19 @@ jobs:
       - name: Build NixOS Tarball
         id: build
         run: |
-          RESULT_PATH=$(sudo nix run .#nixosConfigurations.nixos.config.system.build.tarballBuilder --print-build-logs)
+          # Use 'sudo -E' to preserve the environment variables (like PATH)
+          # so that the root user can find the 'nix' executable.
+          RESULT_PATH=$(sudo -E nix run .#nixosConfigurations.nixos.config.system.build.tarballBuilder --print-build-logs)
 
           echo "Build complete. Tarball at: $RESULT_PATH"
 
-          # Copy the tarball to a predictable filename for upload
-          cp "$RESULT_PATH" ./nixos.wsl
+          # Copy the tarball (which is root-owned) to a predictable filename
+          # We need sudo to read the original file.
+          sudo cp "$RESULT_PATH" ./nixos.wsl
+
+          # Change the owner of the new file to the 'runner' user
+          # so the release action can read and upload it.
+          sudo chown runner:runner ./nixos.wsl
 
           # Pass the asset path and name to the release step
           echo "asset_path=./nixos.wsl" >> $GITHUB_OUTPUT
@@ -61,14 +65,13 @@ jobs:
           tag_name: ${{ steps.tag.outputs.tag }}
           # Name of the release
           name: Release ${{ steps.tag.outputs.tag }}
-          # Body of the release
+          # Body of the release (updated to 'nixos')
           body: |
             Automated NixOS WSL build.
-            Target: .#nixosConfigurations.your-hostname
+            Target: .#nixosConfigurations.nixos
           # Files to upload (from the build step)
           files: ${{ steps.build.outputs.asset_path }}
-          # This is the magic! This marks this new release as the "latest"
-          # which powers the /releases/latest/ download link.
+          # This marks this new release as the "latest"
           latest: true
         env:
           # The GITHUB_TOKEN is required to create a release
